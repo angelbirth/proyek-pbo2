@@ -1,5 +1,8 @@
 package pbo;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 public class Entry implements java.io.Serializable {
     /**
      * 
@@ -103,5 +106,13 @@ public class Entry implements java.io.Serializable {
             this.sex = sex;
         else
             throw new IllegalArgumentException("masukan salah");
+    }
+
+    public String[] getDetail() {
+        String sx = sex == 'F' ? "Female" : "Male";
+        return new String[] { id, name, sx, birthplace,
+                new SimpleDateFormat().format(birthday), address, phoneNumber,
+                email, job, company };
+
     }
 }
