@@ -1,6 +1,7 @@
 package pbo;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -9,10 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.sql.SQLException;
 import java.util.Date;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,18 +25,20 @@ import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import com.toedter.calendar.IDateEditor;
-import com.toedter.calendar.JDateChooser;
-
 import org.eclipse.wb.swing.FocusTraversalOnArray;
 
-import java.awt.Component;
+import com.toedter.calendar.JDateChooser;
 
 public class DialogEdit extends JDialog {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9011731532380206280L;
 	private JPanel contentPanel;
 	private JTextField txtID;
 	private JTextField txtName;
@@ -343,7 +348,9 @@ public class DialogEdit extends JDialog {
 				txtID, txtName, rdoMale, rdoFemale, txtBirthplace, dateChooser,
 				dateChooser.getCalendarButton(), txtAddress, txtPhone,
 				txtEmail, txtJob, txtCompany, okButton, cancelButton}));
-
+		this.getRootPane().registerKeyboardAction(escapePressed,
+	            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+	            JComponent.WHEN_IN_FOCUSED_WINDOW);
 	}
 	private void btnOK_Click() {
 		if (!isValid(0, txtID.getText())) {
@@ -425,7 +432,7 @@ public class DialogEdit extends JDialog {
 							+ "birthday=?,address=?,phone_number=?,"
 							+ "email=?,job=?,company=?" + "where id=?");
 			s.setObject(1, txtID.getText());
-			s.setObject(2, txtName.getText());
+			s.setObject(2, txtName.getText().toUpperCase());
 			s.setObject(3, rdoMale.isSelected() ? "M" : "F");
 			s.setObject(4, txtBirthplace.getText());
 			s.setObject(5, dateChooser.getDate());
@@ -446,6 +453,14 @@ public class DialogEdit extends JDialog {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			((JRadioButton) e.getSource()).setSelected(true);
+		}
+	};
+	private final ActionListener escapePressed = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+				DialogEdit.this.dispose();
+			// else if (e.getKeyCode() == KeyEvent.VK_ENTER)
+			// btnOK_Click();;
 		}
 	};
 }

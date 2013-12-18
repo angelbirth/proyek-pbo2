@@ -2,43 +2,40 @@ package pbo;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.sql.SQLException;
+import java.util.Date;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import java.awt.GridBagLayout;
-
-import javax.swing.JSplitPane;
-
-import java.awt.GridBagConstraints;
-
-import javax.swing.JLabel;
-import javax.swing.JCheckBox;
-
-import java.awt.Insets;
-
-import javax.swing.JTextField;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
 
-import javax.swing.JFormattedTextField;
-
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-
 public class DialogFilter extends JDialog {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -746489930968730372L;
+
 	private javax.swing.JFrame parent;
 
 	private final JPanel contentPanel = new JPanel();
-	private String query, id, name, sex, birthday, birthplace, email, address,
-			job, company, phone;
+	private String query;
 	private JTextField txtID;
 	private JTextField txtAge;
 	private JButton okButton;
@@ -50,25 +47,13 @@ public class DialogFilter extends JDialog {
 	private JRadioButton rdbtnName;
 	private JRadioButton rdbtnBirthday;
 	private JRadioButton rdbtnAge;
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		try {
-			DialogFilter dialog = new DialogFilter(null);
-			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-			dialog.setVisible(true);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * Create the dialog.
 	 */
 	public DialogFilter(JFrame parent) {
-
 		super(parent, false);
+		this.parent = parent;
 		setTitle("Apply Filter");
 		setBounds(100, 100, 314, 219);
 		getContentPane().setLayout(new BorderLayout());
@@ -94,14 +79,13 @@ public class DialogFilter extends JDialog {
 		}
 		{
 			txtID = new JTextField();
-			txtID.setEnabled(false);
+			txtID.setToolTipText("Use '%' or '_' for wildcard characters");
 			GridBagConstraints gbc_txtID = new GridBagConstraints();
 			gbc_txtID.insets = new Insets(0, 0, 5, 0);
 			gbc_txtID.fill = GridBagConstraints.HORIZONTAL;
 			gbc_txtID.gridx = 1;
 			gbc_txtID.gridy = 0;
 			contentPanel.add(txtID, gbc_txtID);
-			txtID.setColumns(10);
 		}
 		{
 			rdbtnName = new JRadioButton("Name");
@@ -122,7 +106,6 @@ public class DialogFilter extends JDialog {
 			gbc_txtName.gridx = 1;
 			gbc_txtName.gridy = 1;
 			contentPanel.add(txtName, gbc_txtName);
-			txtName.setColumns(10);
 		}
 		{
 			rdbtnBirthday = new JRadioButton("Birthday");
@@ -138,7 +121,7 @@ public class DialogFilter extends JDialog {
 			dateChooser = new JDateChooser();
 			dateChooser.setEnabled(false);
 			dateChooser.getCalendarButton().setEnabled(false);
-			dateChooser.setDateFormatString("dd-MM-yy");
+			dateChooser.setDateFormatString("yyyy-MM-dd");
 			GridBagConstraints gbc_dateChooser = new GridBagConstraints();
 			gbc_dateChooser.insets = new Insets(0, 0, 5, 0);
 			gbc_dateChooser.fill = GridBagConstraints.BOTH;
@@ -164,7 +147,6 @@ public class DialogFilter extends JDialog {
 			gbc_txtAge.gridx = 1;
 			gbc_txtAge.gridy = 3;
 			contentPanel.add(txtAge, gbc_txtAge);
-			txtAge.setColumns(10);
 		}
 		{
 			rdbtnId.addItemListener(new ItemListener() {
@@ -173,6 +155,10 @@ public class DialogFilter extends JDialog {
 						rdbtnName.setSelected(false);
 						rdbtnBirthday.setSelected(false);
 						rdbtnAge.setSelected(false);
+						txtID.setEnabled(true);
+						txtName.setEnabled(false);
+						dateChooser.setEnabled(false);
+						txtAge.setEnabled(false);
 					}
 				}
 			});
@@ -182,6 +168,10 @@ public class DialogFilter extends JDialog {
 						rdbtnId.setSelected(false);
 						rdbtnBirthday.setSelected(false);
 						rdbtnAge.setSelected(false);
+						txtName.setEnabled(true);
+						txtID.setEnabled(false);
+						dateChooser.setEnabled(false);
+						txtAge.setEnabled(false);
 					}
 				}
 			});
@@ -191,6 +181,10 @@ public class DialogFilter extends JDialog {
 						rdbtnName.setSelected(false);
 						rdbtnId.setSelected(false);
 						rdbtnAge.setSelected(false);
+						txtName.setEnabled(false);
+						txtID.setEnabled(false);
+						dateChooser.setEnabled(true);
+						txtAge.setEnabled(false);
 					}
 				}
 			});
@@ -200,6 +194,10 @@ public class DialogFilter extends JDialog {
 						rdbtnName.setSelected(false);
 						rdbtnBirthday.setSelected(false);
 						rdbtnId.setSelected(false);
+						txtName.setEnabled(false);
+						txtID.setEnabled(false);
+						dateChooser.setEnabled(false);
+						txtAge.setEnabled(true);
 					}
 				}
 			});
@@ -210,6 +208,82 @@ public class DialogFilter extends JDialog {
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
 				okButton = new JButton("Apply Filter");
+				okButton.addActionListener(new ActionListener() {
+					@SuppressWarnings("deprecation")
+					public void actionPerformed(ActionEvent e) {
+						if (rdbtnId.isSelected()) {
+							if (!txtID.getText().matches("[\\d%_]{1,11}")) {
+								JOptionPane.showMessageDialog(
+										DialogFilter.this,
+										"Invalid input for field ID",
+										"Invalid Input",
+										JOptionPane.ERROR_MESSAGE);
+								txtID.requestFocusInWindow();
+								txtID.selectAll();
+								return;
+							}
+							query = "select * from phonebook where id like '"
+									+ txtID.getText() + "';";
+						} else if (rdbtnName.isSelected()) {
+							if (!txtName.getText().matches("[\\w,. *?]+")) {
+								JOptionPane.showMessageDialog(
+										DialogFilter.this,
+										"Invalid input for field Name",
+										"Invalid Input",
+										JOptionPane.ERROR_MESSAGE);
+								txtName.requestFocusInWindow();
+								txtName.selectAll();
+								return;
+							}
+							query = "select * from phonebook where name like '%"
+									+ txtName.getText().toUpperCase()
+											.replace('*', '%')
+											.replace('?', '_') + "%';";
+						} else if (rdbtnBirthday.isSelected()) {
+							if (dateChooser.getDate() == null) {
+								JOptionPane.showMessageDialog(
+										DialogFilter.this,
+										"Invalid input for field Birthday",
+										"Invalid Input",
+										JOptionPane.ERROR_MESSAGE);
+								dateChooser.requestFocusInWindow();
+								return;
+							}
+
+							Date date = dateChooser.getDate();
+							String d = String.valueOf(date.getDate());
+							String m = String.valueOf(date.getMonth() + 1);
+							String y = String.valueOf(date.getYear() + 1900);
+							query = String
+									.format("select * from phonebook where birthday='%s-%s-%s'",
+											y, m, d);
+							System.err.println(String.format("%s-%s-%s", y, m,
+									d));
+						} else {
+							if (!txtAge.getText().matches("\\d{1,2}")) {
+								JOptionPane.showMessageDialog(
+										DialogFilter.this,
+										"Invalid input for field Age",
+										"Invalid Input",
+										JOptionPane.ERROR_MESSAGE);
+								txtAge.requestFocusInWindow();
+								txtAge.selectAll();
+								return;
+							}
+							query = "select * from phonebook where year(sysdate())- year(birthday)="
+									+ txtAge.getText() + ";";
+						}
+
+						try {
+							((MainForm) DialogFilter.this.parent)
+									.loadData(query);
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+
+					}
+				});
 				okButton.setActionCommand("OK");
 				// okButton.addActionListener(okListener);
 				buttonPane.add(okButton);
@@ -217,6 +291,17 @@ public class DialogFilter extends JDialog {
 			}
 			{
 				btnClear = new JButton("Clear Filter");
+				btnClear.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						try {
+							((MainForm) DialogFilter.this.parent)
+									.loadData("select * from phonebook;");
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+				});
 				buttonPane.add(btnClear);
 			}
 			{
@@ -230,13 +315,24 @@ public class DialogFilter extends JDialog {
 				buttonPane.add(cancelButton);
 			}
 		}
-		query = "select * from phonebook where";
+		this.getRootPane().registerKeyboardAction(escapePressed,
+				KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+				JComponent.WHEN_IN_FOCUSED_WINDOW);
+		// query = "select * from phonebook where";
 	}
 	private final ActionListener radioClick = new ActionListener() {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			((JRadioButton) e.getSource()).setSelected(true);
+		}
+	};
+	private final ActionListener escapePressed = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			DialogFilter.this.dispose();
+			// else if (e.getKeyCode() == KeyEvent.VK_ENTER)
+			// btnOK_Click();;
 		}
 	};
 }

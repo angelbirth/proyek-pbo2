@@ -7,7 +7,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -27,6 +26,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
@@ -35,11 +35,12 @@ import javax.swing.event.ListSelectionListener;
 
 import com.mysql.jdbc.Connection;
 
-import javax.swing.JSeparator;
-
 public class MainForm extends JFrame {
-	private static final String LOAD_ALL="select * from phonebook;";
-ButtonGroup grp;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3292325458298702619L;
+	private static final String LOAD_ALL = "select * from phonebook;";
 	/**
 	 * Launch the application.
 	 */
@@ -59,7 +60,7 @@ ButtonGroup grp;
 	private JPanel contentPane;
 	JTable dataTable;
 	private JMenuBar menuBar;
-	private JMenuItem mntmAddData, mntmDeleteSelectedRow, mntmEditSelectedRow,
+	private JMenuItem mntmAddData, mntmDeleteSelectedRow, mntmEdit,
 			mntmRefresh;
 	private final ActionListener mnuAdd_Click = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
@@ -101,9 +102,16 @@ ButtonGroup grp;
 	private final ActionListener mnuRefresh_Click = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			try {
+				if (conn == null || conn.isClosed())
+					connect();
 				loadData(LOAD_ALL);
 			} catch (SQLException e1) {
-				e1.printStackTrace();
+				JOptionPane.showMessageDialog(
+						MainForm.this,
+						"Error while connecting to SQL Server:\n"
+								+ e1.getMessage(), "SQL Error",
+						JOptionPane.ERROR_MESSAGE);
+				return;
 			}
 		}
 	};
@@ -114,6 +122,8 @@ ButtonGroup grp;
 	// "Birthday",
 	// "Address", "Phone Number", "E-mail Address", "Job", "Company" };
 	private JScrollPane scrollPane;
+	private JMenuItem mntmFilter;
+	private JSeparator separator_1;
 	/**
 	 * Create the frame.
 	 */
@@ -153,6 +163,7 @@ ButtonGroup grp;
 		mnuFile.add(mntmAddData);
 
 		mntmRefresh = new JMenuItem("Refresh");
+		mntmRefresh.addActionListener(mnuRefresh_Click);
 		mnuFile.add(mntmRefresh);
 
 		JSeparator separator = new JSeparator();
@@ -169,15 +180,27 @@ ButtonGroup grp;
 		JMenu mnEdit = new JMenu("Edit");
 		menuBar.add(mnEdit);
 
-		mntmEditSelectedRow = new JMenuItem("Edit selected row...");
-		mntmEditSelectedRow.setEnabled(false);
-		mntmEditSelectedRow.addActionListener(mnuEdit_Click);
-		mnEdit.add(mntmEditSelectedRow);
+		mntmEdit = new JMenuItem("Edit selected row...");
+		mntmEdit.setEnabled(false);
+		mntmEdit.addActionListener(mnuEdit_Click);
+		mnEdit.add(mntmEdit);
 
 		mntmDeleteSelectedRow = new JMenuItem("Delete selected row...");
 		mntmDeleteSelectedRow.setEnabled(false);
 		mntmDeleteSelectedRow.addActionListener(mnuDelete_Click);
 		mnEdit.add(mntmDeleteSelectedRow);
+
+		separator_1 = new JSeparator();
+		mnEdit.add(separator_1);
+
+		mntmFilter = new JMenuItem("Apply filter...");
+		mntmFilter.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				DialogFilter dlg = new DialogFilter(MainForm.this);
+				dlg.setVisible(true);
+			}
+		});
+		mnEdit.add(mntmFilter);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -188,6 +211,7 @@ ButtonGroup grp;
 		contentPane.add(scrollPane);
 
 		dataTable = new JTable(model);
+		dataTable.setFillsViewportHeight(true);
 		dataTable.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener() {
 					@Override
@@ -195,16 +219,24 @@ ButtonGroup grp;
 						if (dataTable.getSelectedRow() != -1
 								&& dataTable.getSelectedRowCount() == 1) {
 							mntmDeleteSelectedRow.setEnabled(true);
-							mntmEditSelectedRow.setEnabled(true);
+							mntmEdit.setEnabled(true);
 						} else {
 							mntmDeleteSelectedRow.setEnabled(false);
-							mntmEditSelectedRow.setEnabled(false);
+							mntmEdit.setEnabled(false);
 						}
 					}
 				});
-		dataTable.setFillsViewportHeight(true);
 		dataTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		dataTable.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+				if (e.getClickCount() == 2 && dataTable.getSelectedRow() != -1
+						&& dataTable.getSelectedRowCount() == 1)
+					mnuEdit_Click.actionPerformed(null);
+
+			}
 			public void mousePressed(MouseEvent e) {
 				if (e.isPopupTrigger())
 					showMenu(e);
@@ -216,7 +248,8 @@ ButtonGroup grp;
 			}
 
 			private void showMenu(MouseEvent e) {
-				if (dataTable.getSelectedRow() != -1 && dataTable.getSelectedRowCount()==1) {
+				if (dataTable.getSelectedRow() != -1
+						&& dataTable.getSelectedRowCount() == 1) {
 					mnuDelete.setEnabled(true);
 					mnuEdit.setEnabled(true);
 				} else {
@@ -232,6 +265,8 @@ ButtonGroup grp;
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					dataTable.clearSelection();
+				}if(e.getKeyCode()==KeyEvent.VK_DELETE) {
+					mnuDelete_Click.actionPerformed(null);
 				}
 			}
 		});
@@ -268,10 +303,10 @@ ButtonGroup grp;
 							"Error while connecting to SQL Server:\n"
 									+ e1.getMessage(), "SQL Error",
 							JOptionPane.ERROR_MESSAGE);
+					return;
 				}
 			}
 		});
-		grp=new ButtonGroup();
 	}
 	public void addData() {
 		DialogAdd dlg = new DialogAdd(this);
@@ -288,7 +323,8 @@ ButtonGroup grp;
 		dlg.setVisible(true);
 	}
 	public void loadData(String query) throws SQLException {
-		if (!conn.isClosed()) {
+		// connect();
+		if (conn != null && !conn.isClosed()) {
 			Statement s = conn.createStatement();
 			ResultSet rs = s.executeQuery(query);
 			ArrayList<Entry> data = new ArrayList<>();
@@ -308,10 +344,11 @@ ButtonGroup grp;
 			}
 			model.setData(data);
 			model.fireTableDataChanged();
-		} else {
-			connect();
-			loadData(LOAD_ALL);
 		}
+		// else {
+		// connect();
+		// loadData(LOAD_ALL);
+		// }
 	}
 
 }
